@@ -39,16 +39,25 @@ audio.save("audio.wav");
 
 > Life is like a box of chocolates. You never know what you're gonna get.
 
-| Voice                    | Nationality | Gender | Sample                                                                                                                                  |
-| ------------------------ | ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Default (`af`)           | American    | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/C0_ZUcNSAxvMwpS8QbnKv.wav"></audio> |
-| Bella (`af_bella`)       | American    | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/B_q15Z_FXdgBP9-Hk9oKq.wav"></audio> |
-| Nicole (`af_nicole`)     | American    | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/sS8U5lQHkhgX7rwTmy-5w.wav"></audio> |
-| Sarah (`af_sarah`)       | American    | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/SokkBiqEqwxLLx_pqvf1p.wav"></audio> |
-| Sky (`af_sky`)           | American    | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/IzySGHUtl5mYeFxx1oaRf.wav"></audio> |
-| Adam (`am_adam`)         | American    | Male   | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/9n6myE6--ZsEuF5xDv5eC.wav"></audio> |
-| Michael (`am_michael`)   | American    | Male   | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/EPFciGtTU1YUXu8MAw7DX.wav"></audio> |
-| Emma (`bf_emma`)         | British     | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/AGEsXs-gyJq3dsyo7PjHo.wav"></audio> |
-| Isabella (`bf_isabella`) | British     | Female | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/JEzrrXYJSDcmlEzI7tE0c.wav"></audio> |
-| George (`bm_george`)     | British     | Male   | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/nsv4zKB4MX2TvXRxv504k.wav"></audio> |
-| Lewis (`bm_lewis`)       | British     | Male   | <audio controls src="https://cdn-uploads.huggingface.co/production/uploads/61b253b7ac5ecaae3d1efe0c/g_mcBl2xTbQl0sbrpZt48.wav"></audio> |
+| Voice                    | Nationality | Gender | Sample                                                                                                   |
+| ------------------------ | ----------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| Default (`af`)           | American    | Female | <video controls src="https://github.com/user-attachments/assets/c183df83-58a9-4aea-8fdf-225092acec57" /> |
+| Bella (`af_bella`)       | American    | Female | <video controls src="https://github.com/user-attachments/assets/0730fff0-22b3-458f-9675-36d313d872d6" /> |
+| Nicole (`af_nicole`)     | American    | Female | <video controls src="https://github.com/user-attachments/assets/4ce0b3f6-eaec-4e47-901c-9d29e2b60c86" /> |
+| Sarah (`af_sarah`)       | American    | Female | <video controls src="https://github.com/user-attachments/assets/d37dba3f-de59-44c4-bc3d-da91ea1b5a4a" /> |
+| Sky (`af_sky`)           | American    | Female | <video controls src="https://github.com/user-attachments/assets/38230be5-881c-4407-81e6-a0b1e4101565" /> |
+| Adam (`am_adam`)         | American    | Male   | <video controls src="https://github.com/user-attachments/assets/66a4c439-e80b-4c91-8a27-ae094486a2d8" /> |
+| Michael (`am_michael`)   | American    | Male   | <video controls src="https://github.com/user-attachments/assets/79a8879d-b564-4222-b2d5-a97f783ae897" /> |
+| Emma (`bf_emma`)         | British     | Female | <video controls src="https://github.com/user-attachments/assets/ad5eb254-1d84-4282-9d23-371d5765d820" /> |
+| Isabella (`bf_isabella`) | British     | Female | <video controls src="https://github.com/user-attachments/assets/ea7e6825-dad0-403c-9ece-680af04f5a25" /> |
+| George (`bm_george`)     | British     | Male   | <video controls src="https://github.com/user-attachments/assets/e09040aa-578f-40a6-b7fd-76a5b005346c" /> |
+| Lewis (`bm_lewis`)       | British     | Male   | <video controls src="https://github.com/user-attachments/assets/5d7b26bf-8900-4a9a-8ee5-a16c39bb834c" /> |
+
+
+
+
+
+
+
+
+
