@@ -55,7 +55,7 @@
   "homepage": "https://github.com/hexgrad/kokoro",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hexgrad/kokoro"
+    "url": "git+https://github.com/hexgrad/kokoro.git"
   },
   "publishConfig": {
     "access": "public"
