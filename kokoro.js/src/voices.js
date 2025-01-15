@@ -79,7 +79,7 @@ async function getVoiceFile(id) {
 
   let cache;
   try {
-    cache = await caches.open("kokoro-tts");
+    cache = await caches.open("kokoro-voices");
     const cachedResponse = await cache.match(url);
     if (cachedResponse) {
       return await cachedResponse.arrayBuffer();

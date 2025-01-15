@@ -1,9 +1,9 @@
 # Kokoro TTS
 
 <p align="center">
-    <a href="https://www.npmjs.com/package/kokoro-tts"><img alt="NPM" src="https://img.shields.io/npm/v/kokoro-tts"></a>
-    <a href="https://www.npmjs.com/package/kokoro-tts"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/kokoro-tts"></a>
-    <a href="https://www.jsdelivr.com/package/npm/kokoro-tts"><img alt="jsDelivr Hits" src="https://img.shields.io/jsdelivr/npm/hw/kokoro-tts"></a>
+    <a href="https://www.npmjs.com/package/kokoro-js"><img alt="NPM" src="https://img.shields.io/npm/v/kokoro-js"></a>
+    <a href="https://www.npmjs.com/package/kokoro-js"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/kokoro-js"></a>
+    <a href="https://www.jsdelivr.com/package/npm/kokoro-js"><img alt="jsDelivr Hits" src="https://img.shields.io/jsdelivr/npm/hw/kokoro-js"></a>
     <a href="https://github.com/hexgrad/kokoro/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/hexgrad/kokoro?color=blue"></a>
 </p>
 
@@ -11,16 +11,16 @@ Kokoro is a frontier TTS model for its size of 82 million parameters (text in/au
 
 ## Usage
 
-First, install the `kokoro-tts` library from [NPM](https://npmjs.com/package/kokoro-tts) using:
+First, install the `kokoro-js` library from [NPM](https://npmjs.com/package/kokoro-js) using:
 
 ```bash
-npm i kokoro-tts
+npm i kokoro-js
 ```
 
 You can then generate speech as follows:
 
 ```js
-import { KokoroTTS } from "kokoro-tts";
+import { KokoroTTS } from "kokoro-js";
 
 const model_id = "onnx-community/Kokoro-82M-ONNX";
 const tts = await KokoroTTS.from_pretrained(model_id, {
