@@ -35,7 +35,7 @@ const audio = await tts.generate(text, {
 audio.save("audio.wav");
 ```
 
-## Samples
+## Voices/Samples
 
 > Life is like a box of chocolates. You never know what you're gonna get.
 
@@ -52,12 +52,4 @@ audio.save("audio.wav");
 | Isabella (`bf_isabella`) | British     | Female | <video controls src="https://github.com/user-attachments/assets/ea7e6825-dad0-403c-9ece-680af04f5a25" /> |
 | George (`bm_george`)     | British     | Male   | <video controls src="https://github.com/user-attachments/assets/e09040aa-578f-40a6-b7fd-76a5b005346c" /> |
 | Lewis (`bm_lewis`)       | British     | Male   | <video controls src="https://github.com/user-attachments/assets/5d7b26bf-8900-4a9a-8ee5-a16c39bb834c" /> |
-
-
-
-
-
-
-
-
 
