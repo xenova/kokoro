@@ -10,6 +10,10 @@ short_description: High-quality speech synthesis powered by Kokoro TTS
 header: mini
 models:
   - onnx-community/Kokoro-82M-ONNX
+custom_headers:
+  cross-origin-embedder-policy: require-corp
+  cross-origin-opener-policy: same-origin
+  cross-origin-resource-policy: cross-origin
 ---
 
 # Kokoro Text-to-Speech
