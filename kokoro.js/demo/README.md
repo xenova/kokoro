@@ -8,6 +8,8 @@ pinned: false
 license: apache-2.0
 short_description: High-quality speech synthesis powered by Kokoro TTS
 header: mini
+models:
+  - onnx-community/Kokoro-82M-ONNX
 ---
 
 # Kokoro Text-to-Speech
