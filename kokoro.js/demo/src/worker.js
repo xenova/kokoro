@@ -9,13 +9,12 @@ self.postMessage({ status: "ready" });
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (e) => {
-    const { text, voice } = e.data;
+  const { text, voice } = e.data;
 
-    // Generate speech
-    const audio = await tts.generate(text, { voice });
+  // Generate speech
+  const audio = await tts.generate(text, { voice });
 
-    // Send the audio file back to the main thread
-    const blob = audio.toBlob();
-    self.postMessage({ status: "complete", audio: URL.createObjectURL(blob), text });
+  // Send the audio file back to the main thread
+  const blob = audio.toBlob();
+  self.postMessage({ status: "complete", audio: URL.createObjectURL(blob), text });
 });
-

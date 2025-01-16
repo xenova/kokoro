@@ -10,7 +10,6 @@ short_description: High-quality speech synthesis powered by Kokoro TTS
 header: mini
 ---
 
-
 # Kokoro Text-to-Speech
 
 A simple React + Vite application for running [Kokoro](https://github.com/hexgrad/kokoro), a frontier text-to-speech model for its size. The model runs 100% locally in the browser using [kokoro-js](https://www.npmjs.com/package/kokoro-js) and [🤗 Transformers.js](https://www.npmjs.com/package/@huggingface/transformers)!
