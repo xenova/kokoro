@@ -6,11 +6,12 @@ export default function App() {
   const worker = useRef(null);
 
   const [inputText, setInputText] = useState("Life is like a box of chocolates. You never know what you're gonna get.");
-  const [selectedSpeaker, setSelectedSpeaker] = useState("af");
+  const [selectedSpeaker, setSelectedSpeaker] = useState("af_heart");
 
+  const [voices, setVoices] = useState([]);
   const [status, setStatus] = useState(null);
   const [error, setError] = useState(null);
-  const [loadingMessage, setLoadingMessage] = useState("Loading model (only downloaded once)...");
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
 
   const [results, setResults] = useState([]);
 
@@ -24,18 +25,16 @@ export default function App() {
     // Create a callback function for messages from the worker thread.
     const onMessageReceived = (e) => {
       switch (e.data.status) {
-        // TODO: WebGPU feature checking
-        // case "feature-success":
-        //   break;
-
-        // case "feature-error":
-        //   setError(e.data.data);
-        //   break;
-
+        case "device":
+          setLoadingMessage(`Loading model (device="${e.data.device}")`);
+          break;
         case "ready":
           setStatus("ready");
+          setVoices(e.data.voices);
           break;
-
+        case "error":
+          setError(e.data.data);
+          break;
         case "complete":
           const { audio, text } = e.data;
           // Generation complete: re-enable the "Generate" button
@@ -47,6 +46,7 @@ export default function App() {
 
     const onErrorReceived = (e) => {
       console.error("Worker error:", e);
+      setError(e.message);
     };
 
     // Attach the callback function as an event listener.
@@ -99,17 +99,11 @@ export default function App() {
             <textarea placeholder="Enter text..." value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full min-h-[100px] max-h-[300px] bg-gray-700/50 backdrop-blur-sm border-2 border-gray-600 rounded-xl resize-y text-gray-100 placeholder-gray-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={Math.min(8, inputText.split("\n").length)} />
             <div className="flex flex-col items-center space-y-4">
               <select value={selectedSpeaker} onChange={(e) => setSelectedSpeaker(e.target.value)} className="w-full bg-gray-700/50 backdrop-blur-sm border-2 border-gray-600 rounded-xl text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="af">Default (American Female)</option>
-                <option value="af_bella">Bella (American Female)</option>
-                <option value="af_nicole">Nicole (American Female)</option>
-                <option value="af_sarah">Sarah (American Female)</option>
-                <option value="af_sky">Sky (American Female)</option>
-                <option value="am_adam">Adam (American Male)</option>
-                <option value="am_michael">Michael (American Male)</option>
-                <option value="bf_emma">Emma (British Female)</option>
-                <option value="bf_isabella">Isabella (British Female)</option>
-                <option value="bm_george">George (British Male)</option>
-                <option value="bm_lewis">Lewis (British Male)</option>
+                {Object.entries(voices).map(([id, voice]) => (
+                  <option key={id} value={id}>
+                    {voice.name} ({voice.language === "en-us" ? "American" : "British"} {voice.gender})
+                  </option>
+                ))}
               </select>
               <button type="submit" className="inline-flex justify-center items-center px-6 py-2 text-lg font-semibold bg-gradient-to-t from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors duration-300 rounded-xl text-white disabled:opacity-50" disabled={status === "running" || inputText.trim() === ""}>
                 {status === "running" ? "Generating..." : "Generate"}

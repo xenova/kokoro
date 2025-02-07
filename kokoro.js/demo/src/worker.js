@@ -1,11 +1,20 @@
 import { KokoroTTS } from "kokoro-js";
+import { detectWebGPU } from "./utils.js";
 
-const model_id = "onnx-community/Kokoro-82M-ONNX";
+// Device detection
+const device = (await detectWebGPU()) ? "webgpu" : "wasm";
+self.postMessage({ status: "device", device });
+
+// Load the model
+const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
 const tts = await KokoroTTS.from_pretrained(model_id, {
-  dtype: "q8", // Options: "fp32", "fp16", "q8", "q4", "q4f16"
+  dtype: device === "wasm" ? "q8" : "fp32",
+  device,
+}).catch((e) => {
+  self.postMessage({ status: "error", error: e.message });
+  throw e;
 });
-
-self.postMessage({ status: "ready" });
+self.postMessage({ status: "ready", voices: tts.voices, device });
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (e) => {
