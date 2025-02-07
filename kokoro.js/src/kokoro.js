@@ -41,24 +41,27 @@ export class KokoroTTS {
     console.table(VOICES);
   }
 
-  /**
-   * Generate audio from text.
-   *
-   * Note: The model will be loaded on the first call, and subsequent calls will use the same model.
-   * @param {string} text The input text
-   * @param {Object} options Additional options
-   * @param {keyof typeof VOICES} [options.voice="af"] The voice style to use
-   * @param {number} [options.speed=1] The speaking speed
-   * @returns {Promise<RawAudio>} The generated audio
-   */
-  async generate(text, { voice = "af", speed = 1 } = {}) {
+  _validate_voice(voice) {
     if (!VOICES.hasOwnProperty(voice)) {
       console.error(`Voice "${voice}" not found. Available voices:`);
       console.table(VOICES);
       throw new Error(`Voice "${voice}" not found. Should be one of: ${Object.keys(VOICES).join(", ")}.`);
     }
+  }
 
-    const language = voice.at(0); // "a" or "b"
+  /**
+   * Generate audio from text.
+   *
+   * @param {string} text The input text
+   * @param {Object} options Additional options
+   * @param {keyof typeof VOICES} [options.voice="af_heart"] The voice style to use
+   * @param {number} [options.speed=1] The speaking speed
+   * @returns {Promise<RawAudio>} The generated audio
+   */
+  async generate(text, { voice = "af_heart", speed = 1 } = {}) {
+    this._validate_voice(voice);
+
+    const language = /** @type {"a"|"b"} */ (voice.at(0)); // "a" or "b"
     const phonemes = await phonemize(text, language);
     const { input_ids } = this.tokenizer(phonemes, {
       truncation: true,

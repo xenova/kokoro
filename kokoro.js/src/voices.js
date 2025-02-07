@@ -418,7 +418,7 @@ export const VOICES = Object.freeze({
   // },
 });
 
-const VOICE_DATA_URL = "https://huggingface.co/onnx-community/Kokoro-82M-ONNX/resolve/main/voices";
+const VOICE_DATA_URL = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices";
 
 /**
  *
