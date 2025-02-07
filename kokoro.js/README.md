@@ -5,10 +5,10 @@
     <a href="https://www.npmjs.com/package/kokoro-js"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/kokoro-js"></a>
     <a href="https://www.jsdelivr.com/package/npm/kokoro-js"><img alt="jsDelivr Hits" src="https://img.shields.io/jsdelivr/npm/hw/kokoro-js"></a>
     <a href="https://github.com/hexgrad/kokoro/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/hexgrad/kokoro?color=blue"></a>
-    <a href="https://huggingface.co/spaces/webml-community/kokoro-web"><img alt="Demo" src="https://img.shields.io/badge/Hugging_Face-demo-green"></a>
+    <a href="https://huggingface.co/spaces/webml-community/kokoro-webgpu"><img alt="Demo" src="https://img.shields.io/badge/Hugging_Face-demo-green"></a>
 </p>
 
-Kokoro is a frontier TTS model for its size of 82 million parameters (text in/audio out). This JavaScript library allows the model to be run 100% locally in the browser thanks to [🤗 Transformers.js](https://huggingface.co/docs/transformers.js). Try it out using our [online demo](https://huggingface.co/spaces/webml-community/kokoro-web)!
+Kokoro is a frontier TTS model for its size of 82 million parameters (text in/audio out). This JavaScript library allows the model to be run 100% locally in the browser thanks to [🤗 Transformers.js](https://huggingface.co/docs/transformers.js). Try it out using our [online demo](https://huggingface.co/spaces/webml-community/kokoro-webgpu)!
 
 ## Usage
 
