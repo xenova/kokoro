@@ -1,5 +1,0 @@
-numpy
-phonemizer
-scipy
-torch
-transformers
