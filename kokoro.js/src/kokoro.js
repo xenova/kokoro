@@ -68,9 +68,12 @@ export class KokoroTTS {
     });
 
     // Select voice style based on number of input tokens
-    const num_tokens = Math.max(
-      input_ids.dims.at(-1) - 2, // Without padding;
-      0,
+    const num_tokens = Math.min(
+      Math.max(
+        input_ids.dims.at(-1) - 2,
+        0,
+      ),
+      509,
     );
 
     // Load voice style
