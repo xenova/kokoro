@@ -164,6 +164,13 @@ function escapeRegExp(string) {
 const PUNCTUATION = ';:,.!?¡¿—…"«»“”(){}[]';
 const PUNCTUATION_PATTERN = new RegExp(`(\\s*[${escapeRegExp(PUNCTUATION)}]+\\s*)+`, "g");
 
+/**
+ * Phonemize text using the eSpeak-NG phonemizer
+ * @param {string} text The text to phonemize
+ * @param {"a"|"b"} language The language to use
+ * @param {boolean} norm Whether to normalize the text
+ * @returns {Promise<string>} The phonemized text
+ */
 export async function phonemize(text, language = "a", norm = true) {
   // 1. Normalize text
   if (norm) {
