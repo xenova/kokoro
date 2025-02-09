@@ -135,7 +135,6 @@ export class KokoroTTS {
       throw new Error("Invalid input type. Expected string or TextSplitterStream.");
     }
     for await (const sentence of splitter) {
-      console.log("received", { sentence });
       const phonemes = await phonemize(sentence, language);
       const { input_ids } = this.tokenizer(phonemes, {
         truncation: true,
