@@ -5,8 +5,8 @@
  * @param {string} c
  * @returns {boolean}
  */
-function isSentenceTerminator(c) {
-  return ".!?…。？！\n".includes(c);
+function isSentenceTerminator(c, newlines = true) {
+  return ".!?…。？！".includes(c) || (newlines && c === "\n");
 }
 
 /**
@@ -114,8 +114,8 @@ function updateStack(c, stack, i, buffer) {
  */
 export class TextSplitterStream {
   constructor() {
-    this.buffer = "";
-    this.sentences = [];
+    this._buffer = "";
+    this._sentences = [];
 
     // For async mode, we need to track the promise resolution.
     this._resolve = null;
@@ -128,7 +128,7 @@ export class TextSplitterStream {
    */
   push(...texts) {
     for (const txt of texts) {
-      this.buffer += txt;
+      this._buffer += txt;
       this._process();
     }
   }
@@ -137,19 +137,19 @@ export class TextSplitterStream {
    * Closes the stream.
    */
   close() {
-    // if (this._closed) {
-    //   throw new Error("Stream is already closed.");
-    // }
+    if (this._closed) {
+      throw new Error("Stream is already closed.");
+    }
     this._closed = true;
     this.flush();
   }
 
   flush() {
-    const remainder = this.buffer.trim();
+    const remainder = this._buffer.trim();
     if (remainder.length > 0) {
-      this.sentences.push(remainder);
+      this._sentences.push(remainder);
     }
-    this.buffer = "";
+    this._buffer = "";
     this._resolve?.();
   }
 
@@ -162,38 +162,38 @@ export class TextSplitterStream {
     let flushIndex = 0;
     let stack = [];
     let i = 0;
-    const len = this.buffer.length;
+    const len = this._buffer.length;
 
     while (i < len) {
-      const c = this.buffer[i];
-      updateStack(c, stack, i, this.buffer);
+      const c = this._buffer[i];
+      updateStack(c, stack, i, this._buffer);
 
       // Only consider splitting if we're not inside any nested structure.
       if (stack.length === 0 && isSentenceTerminator(c)) {
         // Most likely a numbered list, so skip splitting.
-        const current = this.buffer.slice(flushIndex, i);
+        const current = this._buffer.slice(flushIndex, i);
         if (/(^|\n)\d+$/.test(current)) {
           ++i;
           continue;
         }
 
-        // Consume any contiguous terminators and trailing characters.
+        // Consume any contiguous non-newline terminators and trailing characters.
         let j = i;
-        while (j + 1 < len && isSentenceTerminator(this.buffer[j + 1])) {
+        while (j + 1 < len && isSentenceTerminator(this._buffer[j + 1], false)) {
           ++j;
         }
-        while (j + 1 < len && isTrailingChar(this.buffer[j + 1])) {
+        while (j + 1 < len && isTrailingChar(this._buffer[j + 1])) {
           ++j;
         }
         // Look ahead for the next non–whitespace character.
         let n = j + 1;
-        while (n < len && /\s/.test(this.buffer[n])) {
+        while (n < len && /\s/.test(this._buffer[n])) {
           ++n;
         }
 
         // No space after the terminator, so we can't be sure it's a boundary.
         // This ensures things like currency (e.g., $9.99) isn't split
-        if (i === n - 1) {
+        if (i === n - 1 && c !== "\n") {
           ++i;
           continue;
         }
@@ -205,11 +205,13 @@ export class TextSplitterStream {
 
         // Determine the token immediately preceding the terminator.
         let tokenStart = i - 1;
-        while (tokenStart >= 0 && /\S/.test(this.buffer[tokenStart])) {
-          --tokenStart;
-        }
+        while (tokenStart >= 0 && /\S/.test(this._buffer[tokenStart])) --tokenStart;
         tokenStart = Math.max(flushIndex, tokenStart + 1);
-        const token = getTokenFromBuffer(this.buffer, tokenStart);
+        const token = getTokenFromBuffer(this._buffer, tokenStart);
+        if (token.length === 0) {
+          ++i;
+          continue;
+        }
 
         // --- URL/email protection ---
         // If the token appears to be a URL or email (contains "://" or "@")
@@ -232,17 +234,17 @@ export class TextSplitterStream {
         // Apply a heuristic to detect middle initials.
         // If a series of single-letter initials (each ending in a period) is followed by a capitalized word,
         // then it is likely a name and should not be split
-        if (/^([A-Za-z]\.)+$/.test(token) && n < len && /[A-Z]/.test(this.buffer[n])) {
+        if (/^([A-Za-z]\.)+$/.test(token) && n < len && /[A-Z]/.test(this._buffer[n])) {
           ++i;
           continue;
         }
 
         // --- Lookahead: if current terminator is a period and the next non–space character is lowercase, assume not a boundary.
-        if (c === "." && n < len && /[a-z]/.test(this.buffer[n])) {
+        if (c === "." && n < len && /[a-z]/.test(this._buffer[n])) {
           ++i;
           continue;
         }
-        const sentence = this.buffer.substring(flushIndex, j + 1).trim();
+        const sentence = this._buffer.substring(flushIndex, j + 1).trim();
 
         // --- Special case: ellipsis starting a sentence should be merged into the next one ---
         if (sentence === "..." || sentence === "…") {
@@ -251,7 +253,7 @@ export class TextSplitterStream {
         }
 
         // Accept the sentence boundary.
-        if (sentence) this.sentences.push(sentence);
+        if (sentence) this._sentences.push(sentence);
         i = flushIndex = j + 1;
         continue;
       }
@@ -259,9 +261,9 @@ export class TextSplitterStream {
     }
 
     // Remove the processed portion of the buffer.
-    this.buffer = this.buffer.substring(flushIndex);
+    this._buffer = this._buffer.substring(flushIndex);
 
-    if (this.sentences.length > 0) {
+    if (this._sentences.length > 0) {
       // If there are sentences available, resolve the promise (if it exists).
       this._resolve?.();
     }
@@ -273,8 +275,8 @@ export class TextSplitterStream {
    */
   async *[Symbol.asyncIterator]() {
     while (true) {
-      if (this.sentences.length > 0) {
-        yield this.sentences.shift();
+      if (this._sentences.length > 0) {
+        yield this._sentences.shift();
       } else if (this._closed) {
         // No more text is expected.
         break;
@@ -290,8 +292,8 @@ export class TextSplitterStream {
   // Synchronous
   [Symbol.iterator]() {
     this.flush();
-    const iterator = this.sentences[Symbol.iterator]();
-    this.sentences = [];
+    const iterator = this._sentences[Symbol.iterator]();
+    this._sentences = [];
     return iterator;
   }
 }
