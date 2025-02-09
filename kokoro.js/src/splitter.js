@@ -80,7 +80,7 @@ const OPENING = new Set(MATCHING.values());
 function updateStack(c, stack, i, buffer) {
   // Handle standard quotes.
   if (c === '"' || c === "'") {
-    // Ignore an apostrophe if it’s between letters (e.g., in contractions).
+    // Ignore an apostrophe if it's between letters (e.g., in contractions).
     if (c === "'" && i > 0 && i < buffer.length - 1 && /[A-Za-z]/.test(buffer[i - 1]) && /[A-Za-z]/.test(buffer[i + 1])) {
       return;
     }
@@ -197,7 +197,7 @@ export class TextSplitterStream {
       // Only consider splitting if we're not inside any nested structure.
       if (stack.length === 0 && isSentenceTerminator(c)) {
         const currentSegment = buffer.slice(sentenceStart, i);
-        // Skip splitting for likely numbered lists (e.g., "1" or "\n2").
+        // Skip splitting for likely numbered lists (e.g., "1." or "\n2.").
         if (/(^|\n)\d+$/.test(currentSegment)) {
           i++;
           continue;
@@ -205,14 +205,14 @@ export class TextSplitterStream {
 
         const { end: boundaryEnd, nextNonSpace } = scanBoundary(i);
 
-        // If the terminator is not a newline and there’s no extra whitespace,
-        // we might be in the middle of a token (e.g., "$9.99")—so skip splitting.
+        // If the terminator is not a newline and there's no extra whitespace,
+        // we might be in the middle of a token (e.g., "$9.99"), so skip splitting.
         if (i === nextNonSpace - 1 && c !== "\n") {
           i++;
           continue;
         }
 
-        // Wait for more text if there’s no non-whitespace character yet.
+        // Wait for more text if there's no non-whitespace character yet.
         if (nextNonSpace === len) {
           break;
         }
