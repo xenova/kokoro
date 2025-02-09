@@ -30,7 +30,7 @@ function isTrailingChar(c) {
 function getTokenFromBuffer(buffer, start) {
   let end = start;
   while (end < buffer.length && !/\s/.test(buffer[end])) {
-    end++;
+    ++end;
   }
   return buffer.substring(start, end);
 }
@@ -199,7 +199,7 @@ export class TextSplitterStream {
         const currentSegment = buffer.slice(sentenceStart, i);
         // Skip splitting for likely numbered lists (e.g., "1." or "\n2.").
         if (/(^|\n)\d+$/.test(currentSegment)) {
-          i++;
+          ++i;
           continue;
         }
 
@@ -208,7 +208,7 @@ export class TextSplitterStream {
         // If the terminator is not a newline and there's no extra whitespace,
         // we might be in the middle of a token (e.g., "$9.99"), so skip splitting.
         if (i === nextNonSpace - 1 && c !== "\n") {
-          i++;
+          ++i;
           continue;
         }
 
@@ -225,7 +225,7 @@ export class TextSplitterStream {
         tokenStart = Math.max(sentenceStart, tokenStart + 1);
         const token = getTokenFromBuffer(buffer, tokenStart);
         if (!token) {
-          i++;
+          ++i;
           continue;
         }
 
@@ -239,7 +239,7 @@ export class TextSplitterStream {
 
         // --- Abbreviation protection ---
         if (isAbbreviation(token)) {
-          i++;
+          ++i;
           continue;
         }
 
@@ -247,7 +247,7 @@ export class TextSplitterStream {
         // If the token is a series of single-letter initials (each ending in a period)
         // and is followed by a capitalized word, assume it's part of a name.
         if (/^([A-Za-z]\.)+$/.test(token) && nextNonSpace < len && /[A-Z]/.test(buffer[nextNonSpace])) {
-          i++;
+          ++i;
           continue;
         }
 
@@ -255,14 +255,14 @@ export class TextSplitterStream {
         // If the terminator is a period and the next non–whitespace character is lowercase,
         // assume it is not the end of a sentence.
         if (c === "." && nextNonSpace < len && /[a-z]/.test(buffer[nextNonSpace])) {
-          i++;
+          ++i;
           continue;
         }
 
         // Special case: ellipsis that stands alone should be merged with the following sentence.
         const sentence = buffer.substring(sentenceStart, boundaryEnd + 1).trim();
         if (sentence === "..." || sentence === "…") {
-          i++;
+          ++i;
           continue;
         }
 
@@ -274,7 +274,7 @@ export class TextSplitterStream {
         i = sentenceStart = boundaryEnd + 1;
         continue;
       }
-      i++;
+      ++i;
     }
 
     // Remove the processed portion of the buffer.
