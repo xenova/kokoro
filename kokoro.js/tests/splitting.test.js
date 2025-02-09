@@ -544,6 +544,67 @@ describe("Sentence splitting", () => {
     }
   });
 
+  describe("for loop", () => {
+    test("synchronous for ... of", () => {
+      const streamer = new TextSplitterStream();
+      // Initial text
+      streamer.push("Hello, how are you? I'm fine, thanks.");
+
+      // 1. Consume the current stream
+      const sentences = [];
+      for (const sentence of streamer) {
+        sentences.push(sentence);
+      }
+      expect(sentences).toEqual(["Hello, how are you?", "I'm fine, thanks."]);
+
+      // 2. Consume the stream again
+      streamer.push("This is a test. This is unfinish-");
+      const sentences2 = [];
+      for (const sentence of streamer) {
+        sentences2.push(sentence);
+      }
+      expect(sentences2).toEqual(["This is a test.", "This is unfinish-"]);
+
+      // 3. Consume the stream again
+      streamer.push("ed.");
+      const sentences3 = [];
+      for (const sentence of streamer) {
+        sentences3.push(sentence);
+      }
+      expect(sentences3).toEqual(["ed."]);
+    });
+
+    test("asynchronous for ... of", async () => {
+      const streamer = new TextSplitterStream();
+      // Initial text
+      streamer.push("Hello, how are");
+
+      // Consumes the stream asynchronously
+      const sentences = [];
+      const consumeStream = (async () => {
+        for await (const sentence of streamer) {
+          sentences.push(sentence);
+        }
+      })();
+
+      setTimeout(() => {
+        streamer.push(" you? I'm fine, thanks.");
+      }, 10);
+      setTimeout(() => {
+        streamer.push(" This is a test. This is unfinish-");
+      }, 20);
+      setTimeout(() => {
+        streamer.push("ed.");
+      }, 30);
+      setTimeout(() => {
+        streamer.close();
+      }, 40);
+
+      await consumeStream;
+      expect(sentences).toEqual(["Hello, how are you?", "I'm fine, thanks.", "This is a test.", "This is unfinish-ed."]);
+    });
+  });
+
   describe("streaming", () => {
     const tests = [
       // Pre-defined test cases
@@ -552,14 +613,19 @@ describe("Sentence splitting", () => {
       ...TESTS.map(({ name, input, target }) => ({ name, input: Array.from(input), target })),
     ];
     for (const { name, input, target } of tests) {
-      test(name, () => {
-        const sentences = [];
-        {
-          const streamer = new TextSplitterStream((chunk) => sentences.push(chunk));
-          streamer.push(...input);
-          streamer.close();
-        }
+      test(name, async () => {
+        const streamer = new TextSplitterStream();
 
+        const sentences = [];
+        const consumeStream = (async () => {
+          for await (const sentence of streamer) {
+            sentences.push(sentence);
+          }
+        })();
+        streamer.push(...input);
+        streamer.close();
+
+        await consumeStream;
         expect(sentences).toEqual(target);
       });
     }

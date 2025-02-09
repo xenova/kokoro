@@ -35,57 +35,16 @@ function getTokenFromBuffer(buffer, start) {
 }
 
 // NOTE: strings with single letters joined by periods (like "i.e", "e.g", "u.s.a", "u.s") are handled in a separate case
+// prettier-ignore
 const ABBREVIATIONS = new Set([
-  "mr",
-  "mrs",
-  "ms",
-  "dr",
-  "prof",
-  "sr",
-  "jr",
-  "sgt",
-  "col",
-  "gen",
-  "rep",
-  "sen",
-  "gov",
-  "lt",
-  "maj",
-  "capt",
-  "st",
-  "mt",
-  "etc",
-  "co",
-  "inc",
-  "ltd",
-  "dept",
+  "mr", "mrs", "ms", "dr", "prof",
+  "sr", "jr", "sgt", "col", "gen", "rep", "sen", "gov", "lt", "maj", "capt",
+  "st", "mt", "etc",
+  "co", "inc", "ltd", "dept",
   "vs",
-  "p",
-  "pg",
-  "jan",
-  "feb",
-  "mar",
-  "apr",
-  "jun",
-  "jul",
-  "aug",
-  "sep",
-  "sept",
-  "oct",
-  "nov",
-  "dec", // Months
-  "sun",
-  "mon",
-  "tu",
-  "tue",
-  "tues",
-  "wed",
-  "th",
-  "thu",
-  "thur",
-  "thurs",
-  "fri",
-  "sat", // Days of the week
+  "p", "pg",
+  "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+  "sun", "mon", "tu", "tue", "tues", "wed", "th", "thu", "thur", "thurs", "fri", "sat",
 ]);
 
 /**
@@ -112,6 +71,7 @@ const MATCHING = new Map([
   ["』", "『"],
 ]);
 const OPENING = new Set(MATCHING.values());
+
 /**
  * Updates the nesting stack to track quotes and paired punctuation.
  * This function supports both standard (", ', (), [], {}) and Japanese quotes (「」「』『』).
@@ -149,19 +109,17 @@ function updateStack(c, stack, i, buffer) {
     return;
   }
 }
-
 /**
  * A simple stream-based text splitter that emits complete sentences.
  */
 export class TextSplitterStream {
-  /**
-   * @param {function(string):any} callback
-   * @param {object} options
-   */
-  constructor(callback, options = {}) {
-    this.callback = callback;
-    this.options = options;
+  constructor() {
     this.buffer = "";
+    this.sentences = [];
+
+    // For async mode, we need to track the promise resolution.
+    this._resolve = null;
+    this._closed = false;
   }
 
   /**
@@ -176,15 +134,23 @@ export class TextSplitterStream {
   }
 
   /**
-   * Closes the stream and flushes any remaining text.
+   * Closes the stream.
    */
   close() {
-    // On close, flush whatever remains.
+    // if (this._closed) {
+    //   throw new Error("Stream is already closed.");
+    // }
+    this._closed = true;
+    this.flush();
+  }
+
+  flush() {
     const remainder = this.buffer.trim();
     if (remainder.length > 0) {
-      this.callback(remainder);
+      this.sentences.push(remainder);
     }
     this.buffer = "";
+    this._resolve?.();
   }
 
   /**
@@ -195,13 +161,11 @@ export class TextSplitterStream {
   _process() {
     let flushIndex = 0;
     let stack = [];
-    let sentences = [];
     let i = 0;
     const len = this.buffer.length;
 
     while (i < len) {
       const c = this.buffer[i];
-
       updateStack(c, stack, i, this.buffer);
 
       // Only consider splitting if we're not inside any nested structure.
@@ -287,7 +251,7 @@ export class TextSplitterStream {
         }
 
         // Accept the sentence boundary.
-        if (sentence) sentences.push(sentence);
+        if (sentence) this.sentences.push(sentence);
         i = flushIndex = j + 1;
         continue;
       }
@@ -297,12 +261,38 @@ export class TextSplitterStream {
     // Remove the processed portion of the buffer.
     this.buffer = this.buffer.substring(flushIndex);
 
-    // Emit every complete sentence.
-    for (const s of sentences) {
-      if (s.length > 0) {
-        this.callback(s);
+    if (this.sentences.length > 0) {
+      // If there are sentences available, resolve the promise (if it exists).
+      this._resolve?.();
+    }
+  }
+
+  /**
+   * Async iterator to iterate over sentences.
+   * @returns {AsyncGenerator<string, void, void>}
+   */
+  async *[Symbol.asyncIterator]() {
+    while (true) {
+      if (this.sentences.length > 0) {
+        yield this.sentences.shift();
+      } else if (this._closed) {
+        // No more text is expected.
+        break;
+      } else {
+        // No more text is available, so we wait for more.
+        await new Promise((resolve) => {
+          this._resolve = resolve;
+        });
       }
     }
+  }
+
+  // Synchronous
+  [Symbol.iterator]() {
+    this.flush();
+    const iterator = this.sentences[Symbol.iterator]();
+    this.sentences = [];
+    return iterator;
   }
 }
 
@@ -312,9 +302,7 @@ export class TextSplitterStream {
  * @returns {string[]} The list of sentences
  */
 export function split(text) {
-  const sentences = [];
-  const splitter = new TextSplitterStream((chunk) => sentences.push(chunk));
+  const splitter = new TextSplitterStream();
   splitter.push(text);
-  splitter.close();
-  return sentences;
+  return [...splitter];
 }
