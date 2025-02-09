@@ -13,7 +13,7 @@
   "scripts": {
     "build": "rm -rf dist types && rollup -c && tsc && cp ../LICENSE LICENSE",
     "format": "prettier --write . --print-width 1000",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "keywords": [
     "kokoro",
