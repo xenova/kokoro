@@ -62,6 +62,8 @@ const MATCHING = new Map([
   ["〉", "〈"],
   ["」", "「"],
   ["』", "『"],
+  ["〕", "〔"],
+  ["】", "【"],
 ]);
 // Set of opening punctuation characters.
 const OPENING = new Set(MATCHING.values());
