@@ -2,17 +2,18 @@
  * Returns true if the character is considered a sentence terminator.
  * This includes ASCII (".", "!", "?") and common Unicode terminators.
  * NOTE: We also include newlines here, as this is favourable for text-to-speech systems.
- * @param {string} c
+ * @param {string} c The character to test.
+ * @param {boolean} [includeNewlines=true] Whether to treat newlines as terminators.
  * @returns {boolean}
  */
-function isSentenceTerminator(c, newlines = true) {
-  return ".!?…。？！".includes(c) || (newlines && c === "\n");
+function isSentenceTerminator(c, includeNewlines = true) {
+  return ".!?…。？！".includes(c) || (includeNewlines && c === "\n");
 }
 
 /**
- * Returns true if the character should be attached to the terminator,
- * for example closing quotes or brackets.
- * @param {string} c
+ * Returns true if the character should be attached to the sentence terminator,
+ * such as closing quotes or brackets.
+ * @param {string} c The character to test.
  * @returns {boolean}
  */
 function isTrailingChar(c) {
@@ -20,11 +21,11 @@ function isTrailingChar(c) {
 }
 
 /**
- * Starting at index 'start', extracts a token (a contiguous run of non–whitespace)
- * from the buffer.
- * @param {string} buffer
- * @param {number} start
- * @returns {string}
+ * Extracts a token (a contiguous sequence of non–whitespace characters)
+ * from the buffer starting at the given index.
+ * @param {string} buffer The input text.
+ * @param {number} start The starting index.
+ * @returns {string} The extracted token.
  */
 function getTokenFromBuffer(buffer, start) {
   let end = start;
@@ -34,30 +35,22 @@ function getTokenFromBuffer(buffer, start) {
   return buffer.substring(start, end);
 }
 
-// NOTE: strings with single letters joined by periods (like "i.e", "e.g", "u.s.a", "u.s") are handled in a separate case
-// prettier-ignore
-const ABBREVIATIONS = new Set([
-  "mr", "mrs", "ms", "dr", "prof",
-  "sr", "jr", "sgt", "col", "gen", "rep", "sen", "gov", "lt", "maj", "capt",
-  "st", "mt", "etc",
-  "co", "inc", "ltd", "dept",
-  "vs",
-  "p", "pg",
-  "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
-  "sun", "mon", "tu", "tue", "tues", "wed", "th", "thu", "thur", "thurs", "fri", "sat",
-]);
+// List of common abbreviations. Note that strings with single letters joined by periods
+// (e.g., "i.e", "e.g", "u.s.a", "u.s") are handled separately.
+const ABBREVIATIONS = new Set(["mr", "mrs", "ms", "dr", "prof", "sr", "jr", "sgt", "col", "gen", "rep", "sen", "gov", "lt", "maj", "capt", "st", "mt", "etc", "co", "inc", "ltd", "dept", "vs", "p", "pg", "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec", "sun", "mon", "tu", "tue", "tues", "wed", "th", "thu", "thur", "thurs", "fri", "sat"]);
 
 /**
- * Returns true if the token (or series of initials) is known to be an abbreviation.
- * @param {string} token
+ * Determines if the given token (or series of initials) is a known abbreviation.
+ * @param {string} token The token to check.
  * @returns {boolean}
  */
 function isAbbreviation(token) {
-  token = token.replace(/['’]s$/i, "");
-  token = token.replace(/\.+$/, "");
+  // Remove possessive endings and trailing periods.
+  token = token.replace(/['’]s$/i, "").replace(/\.+$/, "");
   return ABBREVIATIONS.has(token.toLowerCase());
 }
 
+// Map of closing punctuation to their corresponding opening punctuation.
 const MATCHING = new Map([
   [")", "("],
   ["]", "["],
@@ -70,45 +63,44 @@ const MATCHING = new Map([
   ["」", "「"],
   ["』", "『"],
 ]);
+// Set of opening punctuation characters.
 const OPENING = new Set(MATCHING.values());
 
 /**
  * Updates the nesting stack to track quotes and paired punctuation.
- * This function supports both standard (", ', (), [], {}) and Japanese quotes (「」「』『』).
+ * This supports both standard (", ', (), [], {}) and Japanese quotes (「」「』『』).
  * (An apostrophe between letters is ignored so that contractions remain intact.)
  * @param {string} c The current character.
- * @param {string[]} stack The current stack.
- * @param {number} i The index of c in buffer.
+ * @param {string[]} stack The current nesting stack.
+ * @param {number} i The index of the character in the buffer.
  * @param {string} buffer The full text being processed.
  */
 function updateStack(c, stack, i, buffer) {
-  // Standard quotes.
+  // Handle standard quotes.
   if (c === '"' || c === "'") {
-    // Ignore an apostrophe if it’s between letters (as in contractions).
+    // Ignore an apostrophe if it’s between letters (e.g., in contractions).
     if (c === "'" && i > 0 && i < buffer.length - 1 && /[A-Za-z]/.test(buffer[i - 1]) && /[A-Za-z]/.test(buffer[i + 1])) {
       return;
     }
-    if (stack.length && stack[stack.length - 1] === c) {
+    if (stack.length && stack.at(-1) === c) {
       stack.pop();
     } else {
       stack.push(c);
     }
     return;
   }
-  // Opening punctuation.
+  // Handle opening punctuation.
   if (OPENING.has(c)) {
     stack.push(c);
     return;
   }
-  // Closing punctuation.
-  const closing = MATCHING.get(c);
-  if (closing) {
-    if (stack.length && stack[stack.length - 1] === closing) {
-      stack.pop();
-    }
-    return;
+  // Handle closing punctuation.
+  const expectedOpening = MATCHING.get(c);
+  if (expectedOpening && stack.length && stack.at(-1) === expectedOpening) {
+    stack.pop();
   }
 }
+
 /**
  * A simple stream-based text splitter that emits complete sentences.
  */
@@ -116,15 +108,13 @@ export class TextSplitterStream {
   constructor() {
     this._buffer = "";
     this._sentences = [];
-
-    // For async mode, we need to track the promise resolution.
-    this._resolve = null;
+    this._resolver = null;
     this._closed = false;
   }
 
   /**
-   * Push one or more strings into the stream.
-   * @param  {...string} texts
+   * Push one or more text chunks into the stream.
+   * @param  {...string} texts Text fragments to process.
    */
   push(...texts) {
     for (const txt of texts) {
@@ -134,7 +124,7 @@ export class TextSplitterStream {
   }
 
   /**
-   * Closes the stream.
+   * Closes the stream, signaling that no more text will be pushed.
    */
   close() {
     if (this._closed) {
@@ -144,133 +134,158 @@ export class TextSplitterStream {
     this.flush();
   }
 
+  /**
+   * Flushes any remaining text in the buffer as a sentence.
+   */
   flush() {
     const remainder = this._buffer.trim();
     if (remainder.length > 0) {
       this._sentences.push(remainder);
     }
     this._buffer = "";
-    this._resolve?.();
+    this._resolve();
   }
 
   /**
-   * Processes the internal buffer and emits complete sentences.
-   * If the potential sentence boundary is at the end of the current buffer (i.e.,
-   * we have no non–whitespace lookahead), we do not flush it yet.
+   * Resolve the pending promise to signal that sentences are available.
+   * @private
+   */
+  _resolve() {
+    if (this._resolver) {
+      this._resolver();
+      this._resolver = null;
+    }
+  }
+
+  /**
+   * Processes the internal buffer to extract complete sentences.
+   * If the potential sentence boundary is at the end of the current buffer,
+   * it waits for more text before splitting.
+   * @private
    */
   _process() {
-    let flushIndex = 0;
-    let stack = [];
+    let sentenceStart = 0;
+    const buffer = this._buffer;
+    const len = buffer.length;
     let i = 0;
-    const len = this._buffer.length;
+    let stack = [];
+
+    // Helper to scan from the current index over trailing terminators and punctuation.
+    const scanBoundary = (idx) => {
+      let end = idx;
+      // Consume contiguous sentence terminators (excluding newlines).
+      while (end + 1 < len && isSentenceTerminator(buffer[end + 1], false)) {
+        ++end;
+      }
+      // Consume trailing characters (e.g., closing quotes/brackets).
+      while (end + 1 < len && isTrailingChar(buffer[end + 1])) {
+        ++end;
+      }
+      let nextNonSpace = end + 1;
+      while (nextNonSpace < len && /\s/.test(buffer[nextNonSpace])) {
+        ++nextNonSpace;
+      }
+      return { end, nextNonSpace };
+    };
 
     while (i < len) {
-      const c = this._buffer[i];
-      updateStack(c, stack, i, this._buffer);
+      const c = buffer[i];
+      updateStack(c, stack, i, buffer);
 
       // Only consider splitting if we're not inside any nested structure.
       if (stack.length === 0 && isSentenceTerminator(c)) {
-        // Most likely a numbered list, so skip splitting.
-        const current = this._buffer.slice(flushIndex, i);
-        if (/(^|\n)\d+$/.test(current)) {
-          ++i;
+        const currentSegment = buffer.slice(sentenceStart, i);
+        // Skip splitting for likely numbered lists (e.g., "1" or "\n2").
+        if (/(^|\n)\d+$/.test(currentSegment)) {
+          i++;
           continue;
         }
 
-        // Consume any contiguous non-newline terminators and trailing characters.
-        let j = i;
-        while (j + 1 < len && isSentenceTerminator(this._buffer[j + 1], false)) {
-          ++j;
-        }
-        while (j + 1 < len && isTrailingChar(this._buffer[j + 1])) {
-          ++j;
-        }
-        // Look ahead for the next non–whitespace character.
-        let n = j + 1;
-        while (n < len && /\s/.test(this._buffer[n])) {
-          ++n;
-        }
+        const { end: boundaryEnd, nextNonSpace } = scanBoundary(i);
 
-        // No space after the terminator, so we can't be sure it's a boundary.
-        // This ensures things like currency (e.g., $9.99) isn't split
-        if (i === n - 1 && c !== "\n") {
-          ++i;
+        // If the terminator is not a newline and there’s no extra whitespace,
+        // we might be in the middle of a token (e.g., "$9.99")—so skip splitting.
+        if (i === nextNonSpace - 1 && c !== "\n") {
+          i++;
           continue;
         }
 
-        // If there is no non–whitespace character yet, wait for more text.
-        if (n === len) {
+        // Wait for more text if there’s no non-whitespace character yet.
+        if (nextNonSpace === len) {
           break;
         }
 
         // Determine the token immediately preceding the terminator.
         let tokenStart = i - 1;
-        while (tokenStart >= 0 && /\S/.test(this._buffer[tokenStart])) --tokenStart;
-        tokenStart = Math.max(flushIndex, tokenStart + 1);
-        const token = getTokenFromBuffer(this._buffer, tokenStart);
-        if (token.length === 0) {
-          ++i;
+        while (tokenStart >= 0 && /\S/.test(buffer[tokenStart])) {
+          tokenStart--;
+        }
+        tokenStart = Math.max(sentenceStart, tokenStart + 1);
+        const token = getTokenFromBuffer(buffer, tokenStart);
+        if (!token) {
+          i++;
           continue;
         }
 
         // --- URL/email protection ---
         // If the token appears to be a URL or email (contains "://" or "@")
-        // and the token does not end with a sentence terminator,
-        // assume we are in the middle of the token and skip splitting.
-        if (/https?[,:]\/\//.test(token) || token.includes("@")) {
-          // Only skip splitting if the token does not already end with a terminator.
-          if (!isSentenceTerminator(token.at(-1))) {
-            i = tokenStart + token.length;
-            continue;
-          }
+        // and does not already end with a terminator, skip splitting.
+        if ((/https?[,:]\/\//.test(token) || token.includes("@")) && !isSentenceTerminator(token.at(-1))) {
+          i = tokenStart + token.length;
+          continue;
         }
 
         // --- Abbreviation protection ---
         if (isAbbreviation(token)) {
-          ++i;
+          i++;
           continue;
         }
 
-        // Apply a heuristic to detect middle initials.
-        // If a series of single-letter initials (each ending in a period) is followed by a capitalized word,
-        // then it is likely a name and should not be split
-        if (/^([A-Za-z]\.)+$/.test(token) && n < len && /[A-Z]/.test(this._buffer[n])) {
-          ++i;
+        // --- Middle initials heuristic ---
+        // If the token is a series of single-letter initials (each ending in a period)
+        // and is followed by a capitalized word, assume it's part of a name.
+        if (/^([A-Za-z]\.)+$/.test(token) && nextNonSpace < len && /[A-Z]/.test(buffer[nextNonSpace])) {
+          i++;
           continue;
         }
 
-        // --- Lookahead: if current terminator is a period and the next non–space character is lowercase, assume not a boundary.
-        if (c === "." && n < len && /[a-z]/.test(this._buffer[n])) {
-          ++i;
+        // --- Lookahead heuristic ---
+        // If the terminator is a period and the next non–whitespace character is lowercase,
+        // assume it is not the end of a sentence.
+        if (c === "." && nextNonSpace < len && /[a-z]/.test(buffer[nextNonSpace])) {
+          i++;
           continue;
         }
-        const sentence = this._buffer.substring(flushIndex, j + 1).trim();
 
-        // --- Special case: ellipsis starting a sentence should be merged into the next one ---
+        // Special case: ellipsis that stands alone should be merged with the following sentence.
+        const sentence = buffer.substring(sentenceStart, boundaryEnd + 1).trim();
         if (sentence === "..." || sentence === "…") {
-          ++i;
+          i++;
           continue;
         }
 
         // Accept the sentence boundary.
-        if (sentence) this._sentences.push(sentence);
-        i = flushIndex = j + 1;
+        if (sentence) {
+          this._sentences.push(sentence);
+        }
+        // Move to the next sentence.
+        i = sentenceStart = boundaryEnd + 1;
         continue;
       }
-      ++i;
+      i++;
     }
 
     // Remove the processed portion of the buffer.
-    this._buffer = this._buffer.substring(flushIndex);
+    this._buffer = buffer.substring(sentenceStart);
 
+    // Resolve any pending promise if sentences are available.
     if (this._sentences.length > 0) {
-      // If there are sentences available, resolve the promise (if it exists).
-      this._resolve?.();
+      this._resolve();
     }
   }
 
   /**
-   * Async iterator to iterate over sentences.
+   * Async iterator to yield sentences as they become available.
    * @returns {AsyncGenerator<string, void, void>}
    */
   async *[Symbol.asyncIterator]() {
@@ -278,18 +293,21 @@ export class TextSplitterStream {
       if (this._sentences.length > 0) {
         yield this._sentences.shift();
       } else if (this._closed) {
-        // No more text is expected.
+        // No more text will be pushed.
         break;
       } else {
-        // No more text is available, so we wait for more.
+        // Wait for more text.
         await new Promise((resolve) => {
-          this._resolve = resolve;
+          this._resolver = resolve;
         });
       }
     }
   }
 
-  // Synchronous
+  /**
+   * Synchronous iterator that flushes the buffer and returns all sentences.
+   * @returns {Iterator<string>}
+   */
   [Symbol.iterator]() {
     this.flush();
     const iterator = this._sentences[Symbol.iterator]();
@@ -299,9 +317,9 @@ export class TextSplitterStream {
 }
 
 /**
- * Split text into sentences
- * @param {string} text The input text
- * @returns {string[]} The list of sentences
+ * Splits the input text into an array of sentences.
+ * @param {string} text The text to split.
+ * @returns {string[]} An array of sentences.
  */
 export function split(text) {
   const splitter = new TextSplitterStream();
