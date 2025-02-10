@@ -148,3 +148,5 @@ export class KokoroTTS {
     }
   }
 }
+
+export { TextSplitterStream };
