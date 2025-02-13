@@ -127,6 +127,8 @@ export class TextSplitterStream {
 
   /**
    * Closes the stream, signaling that no more text will be pushed.
+   * This will flush any remaining text in the buffer as a sentence
+   * and allow the consuming process to finish processing the stream.
    */
   close() {
     if (this._closed) {
@@ -291,6 +293,9 @@ export class TextSplitterStream {
    * @returns {AsyncGenerator<string, void, void>}
    */
   async *[Symbol.asyncIterator]() {
+    if (this._resolver) {
+      throw new Error("Another iterator is already active.");
+    }
     while (true) {
       if (this._sentences.length > 0) {
         yield this._sentences.shift();
@@ -315,6 +320,15 @@ export class TextSplitterStream {
     const iterator = this._sentences[Symbol.iterator]();
     this._sentences = [];
     return iterator;
+  }
+
+  /**
+   * Returns the array of sentences currently available.
+   * @type {string[]} The array of sentences.
+   * @readonly
+   */
+  get sentences() {
+    return this._sentences;
   }
 }
 
