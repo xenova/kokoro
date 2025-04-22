@@ -426,7 +426,7 @@ const VOICE_DATA_URL = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ON
  * @returns {Promise<ArrayBufferLike>}
  */
 async function getVoiceFile(id) {
-  if (fs?.readFile) {
+  if (fs && Object.hasOwn(fs, 'readFile')) {
     const dirname = typeof __dirname !== "undefined" ? __dirname : import.meta.dirname;
     const file = path.resolve(dirname, `../voices/${id}.bin`);
     const { buffer } = await fs.readFile(file);
