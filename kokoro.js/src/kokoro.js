@@ -1,4 +1,4 @@
-import { StyleTextToSpeech2Model, AutoTokenizer, Tensor, RawAudio } from "@huggingface/transformers";
+import { env as hf, StyleTextToSpeech2Model, AutoTokenizer, Tensor, RawAudio } from "@huggingface/transformers";
 import { phonemize } from "./phonemize.js";
 import { TextSplitterStream } from "./splitter.js";
 import { getVoiceData, VOICES } from "./voices.js";
@@ -148,5 +148,14 @@ export class KokoroTTS {
     }
   }
 }
+
+export const env = {
+  set wasmPaths(value) {
+    hf.backends.onnx.wasm.wasmPaths = value;
+  },
+  get wasmPaths() {
+    return hf.backends.onnx.wasm.wasmPaths;
+  },
+};
 
 export { TextSplitterStream };
