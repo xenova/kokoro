@@ -8,5 +8,4 @@ export default defineConfig({
   build: {
     target: "esnext",
   },
-  logLevel: process.env.NODE_ENV === "development" ? "error" : "info",
 });
